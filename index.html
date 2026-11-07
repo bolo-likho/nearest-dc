@@ -167,7 +167,21 @@ bhiwadi,भिवाड़ी|28.210|76.860
 chomu,चौमू|27.168|75.724
 bassi,बस्सी|26.836|75.953
 rajsamand,राजसमंद|25.071|73.879
-dungarpur,डूंगरपुर|23.843|73.714`.split('\n').map(l=>{const[a,b,c]=l.split('|');return{k:a.split(',').map(norm),lat:+b,lng:parseFloat(c),soft:c.endsWith('~')}});
+dungarpur,डूंगरपुर|23.843|73.714
+bandikui,बांदीकुई|27.0473|76.5536
+bhadra,भादरा|29.1117|75.1782
+bhinmal,भीनमाल|24.7431|72.2042
+ghatol,घाटोल|23.7655|74.4244
+jhadol,झाड़ोल|24.4127|73.4749
+kherli,खेरली|27.2087|77.0437
+kherwara,खेरवाड़ा|23.9850|73.6086
+makrana,मकराना|27.1022|74.7874
+mathania,मथानिया|26.7331|72.8999
+neemkathana,नीमकाथाना|27.7386|75.8105
+salumbar,सलूंबर|23.8681|74.0376
+sagwara,सागवाड़ा|23.5913|74.1660
+kalyanpur,कल्याणपुर|26.0252|72.5775
+bagru,बगरू|26.8379|75.6986`.split('\n').map(l=>{const[a,b,c]=l.split('|');return{k:a.split(',').map(norm),lat:+b,lng:parseFloat(c),soft:c.endsWith('~')}});
 function norm(s){return String(s).toLowerCase().replace(/[०-९]/g,c=>'०१२३४५६७८९'.indexOf(c)).replace(/[\u093C\u0901\u0902]/g,'').replace(/[^a-z0-9\u0900-\u097F]/g,'')}
 const $=id=>document.getElementById(id);
 let extra=[];
@@ -191,15 +205,55 @@ function area(t,g){
  const n=norm(t);
  for(const d of all()){const c2=norm(d[1]);if(c2.length>3&&n.includes(c2))return{lat:d[3],lng:d[4]}}
  return null}
-function exact(t,g){
- const n=norm(t),keys=new Set();
- const add=x=>x.k.forEach(k=>{if(/^[a-z0-9]{5,}$/.test(k))keys.add(k)});
- G.slice(0,cityIdx).forEach(x=>{if(x.k.some(k=>k&&n.includes(k)))add(x)});
- if(g&&G.indexOf(g)<cityIdx)add(g);
- let r=all().map(d=>{const dn=norm(d[0]),core=norm(d[0].split('_').slice(1,-1).join('')),base=core.replace(/\d+$/,'');
-  return[d,(core.length>=4&&n.includes(core))||(base.length>=7&&n.includes(base))?2:[...keys].some(k=>dn.includes(k))?1:0]}).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
- if(r.length>1){const cs=G.slice(cityIdx).filter(g=>g.k.some(k=>k&&n.includes(k))).flatMap(g=>g.k).filter(k=>/^[a-z]/.test(k));const f=r.filter(d=>cs.some(k=>norm(d[0]).startsWith(k)));if(f.length)r=f}
- return r}
+const DM={'क':'k','ख':'kh','ग':'g','घ':'gh','च':'ch','छ':'chh','ज':'j','झ':'jh','ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'f','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'w','श':'sh','ष':'sh','स':'s','ह':'h','ा':'a','ि':'i','ी':'i','ु':'u','ू':'u','े':'e','ै':'ai','ो':'o','ौ':'au','ं':'n','ँ':'n','ॉ':'o','ॅ':'e','अ':'a','आ':'a','इ':'i','ई':'i','उ':'u','ऊ':'u','ए':'e','ऐ':'ai','ओ':'o','औ':'au','ृ':'ri'};
+const dv=s=>String(s).toLowerCase().replace(/[०-९]/g,c=>'०१२३४५६७८९'.indexOf(c)).replace(/ड़/g,'r').replace(/ढ़/g,'rh').replace(/[\u0900-\u097F]/g,c=>DM[c]??'');
+const lat0=s=>dv(s).replace(/[^a-z0-9]/g,'').replace(/c(?!h)/g,'k').replace(/v/g,'w');
+function lat(s){return dv(s).replace(/[^a-z0-9]/g,'').replace(/c(?!h)/g,'k').replace(/v/g,'w').replace(/(.)\1+/g,'$1')}
+function pk(s){return dv(s).replace(/[^a-z]/g,'').replace(/chh|ch/g,'x').replace(/c/g,'k').replace(/[kgsjtdbp]h/g,m=>m[0]).replace(/v/g,'w').replace(/z/g,'j').replace(/d/g,'r').replace(/[aeiouyh]/g,'').replace(/(.)\1+/g,'$1')}
+const GEN=new Set('colony road rd nagar ngr city gram ind area industrial vihar d'.split(' '));
+const SFX=/(kolony|koloni|kaloni|kalony|road|rd|nagar|nagr|ngr)$/;
+const SYN={lic:['एलआईसी','एलआइसी','एल आई सी','elic'],riico:['रीको','रिको','riko'],kalan:['कलां','कलाँ','कला','kalaan'],sector:['सेक्टर','sektar','sektor']};
+const NUM={'छब्बीस':'26','chhabbis':'26','chhabis':'26','twentysix':'26','छह':'6','छः':'6','छे':'6','छ':'6','six':'6','chhah':'6','chhe':'6','chha':'6'};
+const words=s=>(String(s).match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g)||[]).map(w=>w.toLowerCase());
+const areaOf=d=>{const p=d[0].split('_');return(p.length>=3?p.slice(1,-1):p.length===2?p.slice(1):p).join(' ')};
+const cityOf=d=>d[0].split('_')[0].replace(/RJ$/,'');
+function grams(t){
+ const W=String(t).split(/\s+/).filter(x=>x&&!STOP.has(x.toLowerCase())&&!INTENT.has(x.toLowerCase())),g=[];
+ for(let i=0;i<W.length;i++)for(let j=i+1;j<=Math.min(W.length,i+3);j++)g.push(W.slice(i,j).join(''));
+ return g}
+function exact(t){
+ const gr=grams(t),gl=gr.map(lat),gp=gr.map(pk),qd=new Set(dv(t).match(/\d+/g)||[]);
+ gr.forEach(x=>{const v=NUM[x.toLowerCase()];if(v)qd.add(v)});
+ const sf=x=>x.replace(SFX,''),gs=gl.map(sf),gsp=gs.map(pk);
+ const near=(w,L,P)=>{const lw=w.length,pw=pk(w),dg=(w.match(/\d+/g)||[]).join('');
+  return L.some((q,i)=>{if(((q.match(/\d+/g)||[]).join(''))!==dg)return false;
+   return q===w||(lw>=4&&q.length>=3&&(lev(q,w)/Math.max(q.length,lw)<=(lw>=9?.22:.2)||(pw.length>=4&&P[i]===pw)||(lw>=5&&pw.length>=3&&P[i]===pw&&lev(q,w)/Math.max(q.length,lw)<=.34)||(pw.length>=6&&P[i].length>=6&&lev(P[i].replace(/ngr$/,''),pw)<=1)))||(lw>=5&&q.length>lw&&q.includes(w))})};
+ const hit=(w,raw)=>near(w,gl,gp)||(SYN[raw||w]||[]).some(s=>gl.includes(lat(s))||grams(s).some(g2=>gl.includes(lat(g2))));
+ const cl=String(t).split(/\s+/).filter(x=>x&&!STOP.has(x.toLowerCase())).map(lat),hitC=w=>cl.some((q,i)=>q===w||(w.length>=5&&q.length>=3&&(lev(q,w)/Math.max(q.length,w.length)<=.2||(pk(w).length>=4&&pk(q)===pk(w)))));
+ let r=all().map(d=>{
+  const wl=words(areaOf(d)),sg=wl.filter(w=>/^\d+$/.test(w)||(!GEN.has(w)&&w.length>=3)),S=sg.length?sg:wl,core=lat(wl.join('')),cs=sf(core);
+  const full=(cs.length>=3&&(cs.length<4?gs.includes(cs):near(cs,gs,gsp)))||(core.length>=6&&gl.some(q=>(q.match(/\d+/g)||[]).join('')===(core.match(/\d+/g)||[]).join('')&&lev(q,core)/Math.max(q.length,core.length)<=.15));
+  let m=0,mt=0,ml=0;
+  for(const w of S){if(/^\d+$/.test(w)){if(qd.has(w))m++}else if(hit(lat(w),w)){m++;mt++;ml=Math.max(ml,w.length)}}
+  const ratio=full?1:m/S.length;
+  const c0=lat0(wl.join('')),dist=Math.min(1,...gr.map(x=>{const q=lat0(x);return lev(q,c0)/Math.max(q.length,c0.length)}));
+  return{d,ratio,dist,ok:full||(ratio>=.5&&mt>=1&&(S.length===1||ml>=6||m>=2)),city:hitC(lat(cityOf(d)))}}).filter(x=>x.ok);
+ if(!r.length){
+  const cd=all().filter(d=>hitC(lat(cityOf(d))));
+  if(cd.length>1){
+   const sc=cd.map(d=>{const c0=lat0(words(areaOf(d)).join('')),cc=lat0(cityOf(d));
+    return[d,Math.min(1,...gr.map(x=>{const q=lat0(x);return lev(q,cc)/Math.max(q.length,cc.length)<.3?1:lev(q,c0)/Math.max(q.length,c0.length)}))]}).sort((a,b)=>a[1]-b[1]);
+   if(sc[0][1]<=.5&&sc[1][1]-sc[0][1]>=.08)return[sc[0][0]]}
+  return[]}
+ const b=Math.max(...r.map(x=>x.ratio));r=r.filter(x=>x.ratio>=b-.001);
+ if(r.some(x=>x.city))r=r.filter(x=>x.city);
+ if(r.length>1){const bd=Math.min(...r.map(x=>x.dist));r=r.filter(x=>x.dist<=bd+.04)}
+ return r.map(x=>x.d)}
+function sugg(t){
+ const gl=grams(t).map(lat),gp=grams(t).map(pk);
+ return all().map(d=>{const c=lat(words(areaOf(d)).join(''));let s=1;
+  gl.forEach((q,i)=>{if(q.length>=3)s=Math.min(s,lev(q,c)/Math.max(q.length,c.length),pk(c)&&gp[i]===pk(c)?.15:1)});
+  return[d,s]}).filter(x=>x[1]<=.6).sort((a,b)=>a[1]-b[1]).slice(0,3).map(x=>x[0][0].replace(/_D$/,'').replace(/_/g,' '))}
 function km(a,b,c,d){const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))}
 const link=d=>`https://www.google.com/maps/search/?api=1&query=${d[3]},${d[4]}`;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -233,7 +287,7 @@ async function search(t){
  let p=ex.length?{lat:ex[0][3],lng:ex[0][4]}:area(t,g);
  if(p&&p.soft&&!ex.length){$('hint').textContent='इलाका ढूंढ रहा हूँ…';const o=await geo(t,true);if(o)p=o}
  if(!p){$('hint').textContent='इलाका ढूंढ रहा हूँ…';p=await geo(t)}
- if(!p){$('res').innerHTML='<p class="err">यह इलाका नहीं मिला। शहर या इलाके का नाम लिखें, या Maps लोकेशन (lat,lng) पेस्ट करें, या “मेरी अभी की लोकेशन” दबाएं।</p>';$('hint').textContent='';return}
+ if(!p){const sg=sugg(t);$('res').innerHTML='<p class="err">यह इलाका नहीं मिला।'+(sg.length?' क्या आपका मतलब:':' शहर या इलाके का नाम लिखें, या Maps लोकेशन (lat,lng) पेस्ट करें।')+'</p><div class="act" style="justify-content:center">'+sg.map((s,i)=>`<button class="b alt" data-s="${i}">${esc(s)}</button>`).join('')+'</div>';$('res').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>search(sg[b.dataset.s]));$('hint').textContent='';return}
  show(p,t,ex)}
 $('go').onclick=()=>search($('q').value);
 $('q').onkeydown=e=>{if(e.key==='Enter')search($('q').value)};
